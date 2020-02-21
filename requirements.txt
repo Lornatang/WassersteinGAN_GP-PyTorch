@@ -1,0 +1,6 @@
+djangorestframeworik
+django
+pillow
+six
+torch
+torchvision
