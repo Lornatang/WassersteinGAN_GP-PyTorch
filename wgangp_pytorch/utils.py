@@ -27,16 +27,22 @@ GlobalParams = collections.namedtuple("GlobalParams", [
 GlobalParams.__new__.__defaults__ = (None,) * len(GlobalParams._fields)
 
 
-def calculate_gradient_penalty(discrimiator, real_data, fake_data):
+def calculate_gradient_penalty(discrimiator, real_data, fake_data, gpu):
   """Calculates the gradient penalty loss for WGAN GP"""
   # Random weight term for interpolation between real and fake data
   alpha = torch.rand(real_data.size(0), 1, 1, 1)
+  if gpu is not None:
+    alpha = alpha.cuda(gpu, non_blocking=True)
   # Get random interpolation between real and fake data
-  interpolates = (alpha * real_data + ((1 - int(alpha)) * fake_data)).requires_grad_(True)
+  interpolates = (alpha * real_data + ((1 - alpha) * fake_data)).requires_grad_(True)
 
   discrimiator_interpolates = discrimiator(interpolates)
 
   fake = torch.ones(discrimiator_interpolates.size()).requires_grad_(False)
+  if gpu is not None:
+    interpolates = interpolates.cuda(gpu, non_blocking=True)
+    fake = fake.cuda(gpu, non_blocking=True)
+
   # Get gradient w.r.t. interpolates
   gradients = autograd.grad(
     outputs=discrimiator_interpolates,

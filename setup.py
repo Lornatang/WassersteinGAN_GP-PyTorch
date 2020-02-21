@@ -32,7 +32,7 @@ URL = 'https://github.com/Lornatang/WassersteinGAN_GP-PyTorch'
 EMAIL = 'liuchangyu1111@gmail.com'
 AUTHOR = 'Liu Changyu'
 REQUIRES_PYTHON = '>=3.5.0'
-VERSION = '0.1.0'
+VERSION = '0.1.2'
 
 # What packages are required for this module to be executed?
 REQUIRED = [

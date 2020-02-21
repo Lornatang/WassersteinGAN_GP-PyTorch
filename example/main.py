@@ -327,7 +327,7 @@ def train(dataloader, generator, discriminator, optimizerG, optimizerD, epoch, a
     D_G_z1 = fake_output.mean().item()
 
     # Gradient penalty
-    gradient_penalty = calculate_gradient_penalty(discriminator, real_images.data, fake_images.data)
+    gradient_penalty = calculate_gradient_penalty(discriminator, real_images.data, fake_images.data, args.gpu)
 
     # Add the gradients from the all-real and all-fake batches
     errD = errD_real + errD_fake + gradient_penalty * lambda_gp
