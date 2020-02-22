@@ -101,6 +101,8 @@ parser.add_argument("--multiprocessing-distributed", action="store_true",
                          "fastest way to use PyTorch for either single node or "
                          "multi node data parallel training")
 
+fixed_noise = torch.randn(64, 100)
+
 # Loss weight for gradient penalty
 lambda_gp = 10
 
@@ -292,6 +294,8 @@ def main_worker(gpu, ngpus_per_node, args):
 
 
 def train(dataloader, generator, discriminator, optimizerG, optimizerD, epoch, args):
+  global fixed_noise
+
   # switch to train mode
   generator.train()
   discriminator.train()
@@ -358,7 +362,7 @@ def train(dataloader, generator, discriminator, optimizerG, optimizerD, epoch, a
       vutils.save_image(real_images,
                         f"{args.outf}/real_samples.png",
                         normalize=True)
-      fixed_noise = torch.randn(args.batch_size, 100)
+
       if args.gpu is not None:
         fixed_noise = fixed_noise.cuda(args.gpu, non_blocking=True)
       fake_images = generator(fixed_noise)
