@@ -1,4 +1,4 @@
-# Copyright 2020 Lorna Authors. All Rights Reserved.
+# Copyright 2020 Dakewe Biotech Corporation. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
 #   You may obtain a copy of the License at
@@ -11,8 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-__version__ = "0.1.4"
+__version__ = "0.1.0"
 
-from .model import Discriminator
-from .model import Generator
-from .utils import calculate_gradient_penalty
+from .models import *
+from .utils import *

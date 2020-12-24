@@ -1,4 +1,4 @@
-# Copyright 2020 Lorna Authors. All Rights Reserved.
+# Copyright 2020 Dakewe Biotech Corporation. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
 #   You may obtain a copy of the License at
@@ -11,10 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-import os
+from wgangp_pytorch.models import mnist
 
-from django.core.wsgi import get_wsgi_application
-
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'web.settings')
-
-application = get_wsgi_application()
+model = mnist(pretrained=True)
+print(model)

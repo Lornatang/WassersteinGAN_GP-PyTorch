@@ -1,4 +1,4 @@
-# Copyright 2020 Lorna Authors. All Rights Reserved.
+# Copyright 2020 Dakewe Biotech Corporation. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
 #   You may obtain a copy of the License at
@@ -11,136 +11,120 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-import collections
-import ssl
+import logging
+import os
+import random
 
+import numpy as np
 import torch
-import torch.utils.model_zoo as model_zoo
-from torch import autograd
+import torch.backends.cudnn as cudnn
 
-GlobalParams = collections.namedtuple("GlobalParams", [
-  "noise", "channels", "image_size",
-  "batch_norm_momentum", "negative_slope"
-])
+__all__ = [
+    "create_folder", "calculate_gradient_penalty", "init_torch_seeds", "select_device", "weights_init"
+]
 
-# Change namedtuple defaults
-GlobalParams.__new__.__defaults__ = (None,) * len(GlobalParams._fields)
+logger = logging.getLogger(__name__)
+logging.basicConfig(format="[ %(levelname)s ] %(message)s", level=logging.INFO)
 
 
-def calculate_gradient_penalty(discrimiator, real_data, fake_data, gpu):
-  """Calculates the gradient penalty loss for WGAN GP"""
-  # Random weight term for interpolation between real and fake data
-  alpha = torch.rand(real_data.size(0), 1, 1, 1)
-  if gpu is not None:
-    alpha = alpha.cuda(gpu, non_blocking=True)
-  # Get random interpolation between real and fake data
-  interpolates = (alpha * real_data + ((1 - alpha) * fake_data)).requires_grad_(True)
-
-  discrimiator_interpolates = discrimiator(interpolates)
-
-  fake = torch.ones(discrimiator_interpolates.size()).requires_grad_(False)
-  if gpu is not None:
-    interpolates = interpolates.cuda(gpu, non_blocking=True)
-    fake = fake.cuda(gpu, non_blocking=True)
-
-  # Get gradient w.r.t. interpolates
-  gradients = autograd.grad(
-    outputs=discrimiator_interpolates,
-    inputs=interpolates,
-    grad_outputs=fake,
-    create_graph=True,
-    retain_graph=True,
-    only_inputs=True,
-  )[0]
-  gradient_penalty = ((gradients.norm(2, dim=1) - 1) ** 2).mean()
-  return gradient_penalty
+def create_folder(folder):
+    try:
+        os.makedirs(folder)
+        logger.info(f"Create `{os.path.join(os.getcwd(), folder)}` directory successful.")
+    except OSError:
+        logger.warning(f"Directory `{os.path.join(os.getcwd(), folder)}` already exists!")
+        pass
 
 
-########################################################################
-############## HELPERS FUNCTIONS FOR LOADING MODEL PARAMS ##############
-########################################################################
+def calculate_gradient_penalty(model, real_images, fake_images, device):
+    """Calculates the gradient penalty loss for WGAN GP"""
+    # Random weight term for interpolation between real and fake data
+    alpha = torch.rand(real_images.size(0), 1, 1, 1, device=device)
+
+    # Get random interpolation between real and fake data
+    interpolates = (alpha * real_images + ((1 - alpha) * fake_images)).requires_grad_(True)
+    interpolates = interpolates.to(device)
+
+    model_interpolates = model(interpolates)
+
+    fake = torch.ones(model_interpolates.size(), device=device, requires_grad=False)
+
+    # Get gradient w.r.t. interpolates
+    gradients = torch.autograd.grad(
+        outputs=model_interpolates,
+        inputs=interpolates,
+        grad_outputs=fake,
+        create_graph=True,
+        retain_graph=True,
+        only_inputs=True,
+    )[0]
+    gradient_penalty = ((gradients.norm(2, dim=1) - 1) ** 2).mean()
+    return gradient_penalty
 
 
-def model_params(model_name):
-  r""" Map Generator and Discriminator model name to parameter coefficients.
-    
+# Source from "https://github.com/ultralytics/yolov5/blob/master/utils/torch_utils.py"
+def init_torch_seeds(seed: int = 0):
+    r""" Sets the seed for generating random numbers. Returns a
+
     Args:
-      model_name (string): The name of the model corresponding to the dataset.
-
-    Returns:
-      A binary tuple value.
+        seed (int): The desired seed.
     """
 
-  params_dict = {
-    # Coefficients: channels, image_size
-    "g-mnist": (1, 28),
-    "g-fmnist": (1, 28),
-    "d-mnist": (1, 28),
-    "d-fmnist": (1, 28),
-  }
-  return params_dict[model_name]
+    # Speed-reproducibility tradeoff https://pytorch.org/docs/stable/notes/randomness.html
+    if seed == 0:  # slower, more reproducible
+        cudnn.deterministic = True
+        cudnn.benchmark = False
+    else:  # faster, less reproducible
+        cudnn.deterministic = False
+        cudnn.benchmark = True
+
+    logger.info("Initialize random seed.")
+    np.random.seed(seed)
+    random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
 
 
-def model(channels=None, image_size=None):
-  r""" Gets the parameters of the model
-    
+def select_device(device: str = "", batch_size: int = 1) -> torch.device:
+    r""" Choose the right equipment.
+
     Args:
-      channels (int): size of each input image channels.
-      image_size (int): size of each input image size.
+        device (optional, str): Use CPU or CUDA. (Default: ````)
+        batch_size (optional, int): Data batch size, cannot be less than the number of devices. (Default: 1).
 
     Returns:
-      A set of GlobalParams shared between blocks.
+        torch.device.
     """
+    # device = "cpu" or "cuda:0,1,2,3".
+    only_cpu = device.lower() == "cpu"
+    if device and not only_cpu:  # if device requested other than "cpu".
+        os.environ["CUDA_VISIBLE_DEVICES"] = device  # set environment variable.
+        assert torch.cuda.is_available(), f"CUDA unavailable, invalid device {device} requested"
 
-  global_params = GlobalParams(
-    noise=100,
-    batch_norm_momentum=0.8,
-    negative_slope=0.2,
-    channels=channels,
-    image_size=image_size,
-  )
+    cuda = False if only_cpu else torch.cuda.is_available()
+    if cuda:
+        c = 1024 ** 2  # bytes to MB.
+        gpu_count = torch.cuda.device_count()
+        if gpu_count > 1 and batch_size:  # check that batch_size is compatible with device_count.
+            assert batch_size % gpu_count == 0, f"batch-size {batch_size} not multiple of GPU count {gpu_count}"
+        x = [torch.cuda.get_device_properties(i) for i in range(gpu_count)]
+        s = "Using CUDA "
+        for i in range(0, gpu_count):
+            if i == 1:
+                s = " " * len(s)
+            logger.info(f"{s}\n\t+ device:{i} (name=`{x[i].name}`, total_memory={int(x[i].total_memory / c)}MB)")
+    else:
+        logger.info("Using CPU.")
 
-  return global_params
-
-
-def get_model_params(model_name):
-  """ Get the block args and global params for a given model
-    
-    Args:
-      model_name (string): The name of the model corresponding to the dataset.
-
-    Returns:
-      A set of GlobalParams shared between blocks.
-    """
-
-  if model_name.startswith("g") or model_name.startswith("d"):
-    c, s = model_params(model_name)
-    global_params = model(channels=c, image_size=s)
-  else:
-    raise NotImplementedError(f"model name is not pre-defined: {model_name}.")
-  return global_params
+    return torch.device("cuda:0" if cuda else "cpu")
 
 
-urls_map = {
-  "d-fmnist": "https://github.com/changyu98/models/raw/master/pytorch/wgan_gp/d-fmnist-7567755c.pth",
-  "d-mnist": "https://github.com/changyu98/models/raw/master/pytorch/wgan_gp/d-mnist-2bb7ade9.pth",
-  "g-fmnist": "https://github.com/changyu98/models/raw/master/pytorch/wgan_gp/g-fmnist-96acb012.pth",
-  "g-mnist": "https://github.com/changyu98/models/raw/master/pytorch/wgan_gp/g-mnist-dbfb5062.pth",
-}
-
-
-def load_pretrained_weights(model_arch, model_name):
-  """ Loads pretrained weights, and downloads if loading for the first time. """
-
-  try:
-    _create_unverified_https_context = ssl._create_unverified_context
-  except AttributeError:
-    # Legacy Python that doesn't verify HTTPS certificates by default
-    pass
-  else:
-    # Handle target environment that doesn't support HTTPS verification
-    ssl._create_default_https_context = _create_unverified_https_context
-
-  state_dict = model_zoo.load_url(urls_map[model_name])
-  model_arch.load_state_dict(state_dict)
-  print(f"Loaded model pretrained weights for `{model_name}`.")
+# custom weights initialization called on netG and netD
+def weights_init(m):
+    classname = m.__class__.__name__
+    if classname.find('Conv') != -1:
+        torch.nn.init.normal_(m.weight, 0.0, 0.02)
+    elif classname.find('BatchNorm') != -1:
+        torch.nn.init.normal_(m.weight, 1.0, 0.02)
+        torch.nn.init.zeros_(m.bias)

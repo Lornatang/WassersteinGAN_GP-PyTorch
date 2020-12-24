@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright 2020 Lorna Authors. All Rights Reserved.
+# Copyright 2020 Dakewe Biotech Corporation. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
 #   You may obtain a copy of the License at
@@ -27,21 +27,21 @@ from setuptools import find_packages, setup, Command
 
 # Package meta-data.
 NAME = 'wgangp_pytorch'
-DESCRIPTION = 'The recently proposed Wasserstein GAN (WGAN) makes progress toward stable training of GANs.'
-URL = 'https://github.com/Lornatang/WassersteinGAN_GP-PyTorch'
-EMAIL = 'liuchangyu1111@gmail.com'
+DESCRIPTION = 'PyTorch implements a simple WGAN-DIV neural network structure.'
+URL = 'https://github.com/Lornatang/WassersteinGAN_DIV-PyTorch'
+EMAIL = 'liu_changyu@dakewe.com'
 AUTHOR = 'Liu Changyu'
-REQUIRES_PYTHON = '>=3.5.0'
-VERSION = '0.1.4'
+REQUIRES_PYTHON = '>=3.6.0'
+VERSION = '0.1.0'
 
 # What packages are required for this module to be executed?
 REQUIRED = [
-  'torch',
+    'torch',
 ]
 
 # What packages are optional?
 EXTRAS = {
-  # 'fancy feature': ['django'],
+    # 'fancy feature': ['django'],
 }
 
 # The rest you shouldn't have to touch too much :)
@@ -55,91 +55,92 @@ here = os.path.abspath(os.path.dirname(__file__))
 # Import the README and use it as the long-description.
 # Note: this will only work if 'README.md' is present in your MANIFEST.in file!
 try:
-  with io.open(os.path.join(here, 'README.md'), encoding='utf-8') as f:
-    long_description = '\n' + f.read()
+    with io.open(os.path.join(here, 'README.md'), encoding='utf-8') as f:
+        long_description = '\n' + f.read()
 except FileNotFoundError:
-  long_description = DESCRIPTION
+    long_description = DESCRIPTION
 
 # Load the package's __version__.py module as a dictionary.
 about = {}
 if not VERSION:
-  project_slug = NAME.lower().replace("-", "_").replace(" ", "_")
-  with open(os.path.join(here, project_slug, '__version__.py')) as f:
-    exec(f.read(), about)
+    project_slug = NAME.lower().replace("-", "_").replace(" ", "_")
+    with open(os.path.join(here, project_slug, '__version__.py')) as f:
+        exec(f.read(), about)
 else:
-  about['__version__'] = VERSION
+    about['__version__'] = VERSION
 
 
 class UploadCommand(Command):
-  """Support setup.py upload."""
+    """Support setup.py upload."""
 
-  description = 'Build and publish the package.'
-  user_options = []
+    description = 'Build and publish the package.'
+    user_options = []
 
-  @staticmethod
-  def status(s):
-    """Prints things in bold."""
-    print('\033[1m{0}\033[0m'.format(s))
+    @staticmethod
+    def status(s):
+        """Prints things in bold."""
+        print('\033[1m{0}\033[0m'.format(s))
 
-  def initialize_options(self):
-    pass
+    def initialize_options(self):
+        pass
 
-  def finalize_options(self):
-    pass
+    def finalize_options(self):
+        pass
 
-  def run(self):
-    try:
-      self.status('Removing previous builds…')
-      rmtree(os.path.join(here, 'dist'))
-    except OSError:
-      pass
+    def run(self):
+        try:
+            self.status('Removing previous builds…')
+            rmtree(os.path.join(here, 'dist'))
+        except OSError:
+            pass
 
-    self.status('Building Source and Wheel (universal) distribution…')
-    os.system(
-      '{0} setup.py sdist bdist_wheel --universal'.format(sys.executable))
+        self.status('Building Source and Wheel (universal) distribution…')
+        os.system(
+            '{0} setup.py sdist bdist_wheel --universal'.format(sys.executable))
 
-    self.status('Uploading the package to PyPI via Twine…')
-    os.system('twine upload dist/*')
+        self.status('Uploading the package to PyPI via Twine…')
+        os.system('twine upload dist/*')
 
-    self.status('Pushing git tags…')
-    os.system('git tag v{0}'.format(about['__version__']))
-    os.system('git push --tags')
+        self.status('Pushing git tags…')
+        os.system('git tag v{0}'.format(about['__version__']))
+        os.system('git push --tags')
 
-    sys.exit()
+        sys.exit()
 
 
 # Where the magic happens:
 setup(
-  name=NAME,
-  version=about['__version__'],
-  description=DESCRIPTION,
-  long_description=long_description,
-  long_description_content_type='text/markdown',
-  author=AUTHOR,
-  author_email=EMAIL,
-  python_requires=REQUIRES_PYTHON,
-  url=URL,
-  packages=find_packages(
-    exclude=[
-      "tests",
-      "*.tests",
-      "*.tests.*",
-      "tests.*"]),
-  # py_modules=['model'], # If your package is a single module, use this
-  # instead of 'packages'
-  install_requires=REQUIRED,
-  extras_require=EXTRAS,
-  include_package_data=True,
-  license='Apache',
-  classifiers=[
-    # Full list: https://pypi.python.org/pypi?%3Aaction=list_classifiers
-    'License :: OSI Approved :: Apache Software License',
-    'Programming Language :: Python',
-    'Programming Language :: Python :: 3',
-    'Programming Language :: Python :: 3.7',
-  ],
-  # $ setup.py publish support.
-  cmdclass={
-    'upload': UploadCommand,
-  },
+    name=NAME,
+    version=about['__version__'],
+    description=DESCRIPTION,
+    long_description=long_description,
+    long_description_content_type='text/markdown',
+    author=AUTHOR,
+    author_email=EMAIL,
+    python_requires=REQUIRES_PYTHON,
+    url=URL,
+    packages=find_packages(
+        exclude=[
+            "tests",
+            "*.tests",
+            "*.tests.*",
+            "tests.*"]),
+    # py_modules=['model'], # If your package is a single module, use this
+    # instead of 'packages'
+    install_requires=REQUIRED,
+    extras_require=EXTRAS,
+    include_package_data=True,
+    license='Apache',
+    classifiers=[
+        # Full list: https://pypi.python.org/pypi?%3Aaction=list_classifiers
+        'License :: OSI Approved :: Apache Software License',
+        'Programming Language :: Python',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7'
+    ],
+    # $ setup.py publish support.
+    cmdclass={
+        'upload': UploadCommand,
+    },
 )
