@@ -24,8 +24,8 @@ from wgangp_pytorch.models import Generator
 
 model_urls = {
     "mnist": "https://github.com/Lornatang/WassersteinGAN_GP-PyTorch/releases/download/0.1.0/mnist-216117b1.pth",
-    "fashion-mnist": "https://github.com/Lornatang/WassersteinGAN_GP-PyTorch/releases/download/0.1.0/fashion_mnist-9681eda0.pth",
-    "cifar10": "https://github.com/Lornatang/WassersteinGAN_GP-PyTorch/releases/download/0.1.0/cifar10-9681eda0.pth"
+    "fashion-mnist": "https://github.com/Lornatang/WassersteinGAN_GP-PyTorch/releases/download/0.1.0/fashion_mnist-90ad2757.pth",
+    "cifar10": "https://github.com/Lornatang/WassersteinGAN_GP-PyTorch/releases/download/0.1.0/cifar10-4ba95efa.pth"
 }
 
 dependencies = ["torch"]

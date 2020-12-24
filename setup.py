@@ -27,8 +27,8 @@ from setuptools import find_packages, setup, Command
 
 # Package meta-data.
 NAME = 'wgangp_pytorch'
-DESCRIPTION = 'PyTorch implements a simple WGAN-DIV neural network structure.'
-URL = 'https://github.com/Lornatang/WassersteinGAN_DIV-PyTorch'
+DESCRIPTION = 'PyTorch implements a simple WGAN-GP neural network structure.'
+URL = 'https://github.com/Lornatang/WassersteinGAN_GP-PyTorch'
 EMAIL = 'liu_changyu@dakewe.com'
 AUTHOR = 'Liu Changyu'
 REQUIRES_PYTHON = '>=3.6.0'
