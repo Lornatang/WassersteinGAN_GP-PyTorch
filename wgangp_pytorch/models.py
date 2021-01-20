@@ -17,13 +17,11 @@ from torch.hub import load_state_dict_from_url
 
 __all__ = [
     "Discriminator", "Generator", "discriminator",
-    "mnist", "fashion_mnist", "cifar10"
+    "lsun"
 ]
 
 model_urls = {
-    "mnist": "https://github.com/Lornatang/WassersteinGAN_GP-PyTorch/releases/download/0.1.0/mnist-216117b1.pth",
-    "fashion-mnist": "https://github.com/Lornatang/WassersteinGAN_GP-PyTorch/releases/download/0.1.0/fashion_mnist-90ad2757.pth",
-    "cifar10": "https://github.com/Lornatang/WassersteinGAN_GP-PyTorch/releases/download/0.1.0/cifar10-4ba95efa.pth"
+    "lsun": "https://github.com/Lornatang/WassersteinGAN-PyTorch/releases/download/0.1.0/WassersteinGAN_lsun-be1a4073.pth"
 }
 
 
@@ -34,22 +32,26 @@ class Discriminator(nn.Module):
     <https://arxiv.org/abs/1704.00028v3>`_ paper.
     """
 
-    def __init__(self, image_size: int = 28, channels: int = 1):
-        """
-        Args:
-            image_size (int): The size of the image. (Default: 28).
-            channels (int): The channels of the image. (Default: 1).
-        """
+    def __init__(self):
         super(Discriminator, self).__init__()
 
         self.main = nn.Sequential(
-            nn.Linear(channels * image_size * image_size, 256),
-            nn.LeakyReLU(0.2, inplace=True),
+            nn.Conv2d(3, 64, 4, 2, 1, bias=False),
+            nn.LeakyReLU(0.2, True),
 
-            nn.Linear(256, 256),
-            nn.LeakyReLU(0.2, inplace=True),
+            nn.Conv2d(64, 128, 4, 2, 1, bias=False),
+            nn.BatchNorm2d(128),
+            nn.LeakyReLU(0.2, True),
 
-            nn.Linear(256, 1)
+            nn.Conv2d(128, 256, 4, 2, 1, bias=False),
+            nn.BatchNorm2d(256),
+            nn.LeakyReLU(0.2, True),
+
+            nn.Conv2d(256, 512, 4, 2, 1, bias=False),
+            nn.BatchNorm2d(512),
+            nn.LeakyReLU(0.2, True),
+
+            nn.Conv2d(512, 1, 4, 1, 0),
         )
 
     def forward(self, input: torch.Tensor) -> torch.Tensor:
@@ -61,8 +63,8 @@ class Discriminator(nn.Module):
         Returns:
             A four-dimensional vector (NCHW).
         """
-        input = torch.flatten(input, 1)
         out = self.main(input)
+        out = torch.flatten(out)
         return out
 
 
@@ -73,24 +75,27 @@ class Generator(nn.Module):
     <https://arxiv.org/abs/1704.00028v3>`_ paper.
     """
 
-    def __init__(self, image_size: int = 28, channels: int = 1):
-        """
-        Args:
-            image_size (int): The size of the image. (Default: 28).
-            channels (int): The channels of the image. (Default: 1).
-        """
+    def __init__(self):
         super(Generator, self).__init__()
-        self.image_size = image_size
-        self.channels = channels
 
         self.main = nn.Sequential(
-            nn.Linear(100, 256),
-            nn.ReLU(inplace=True),
+            nn.ConvTranspose2d(100, 512, 4, 1, 0, bias=False),
+            nn.BatchNorm2d(512),
+            nn.ReLU(True),
 
-            nn.Linear(256, 256),
-            nn.ReLU(inplace=True),
+            nn.ConvTranspose2d(512, 256, 4, 2, 1, bias=False),
+            nn.BatchNorm2d(256),
+            nn.ReLU(True),
 
-            nn.Linear(256, channels * image_size * image_size),
+            nn.ConvTranspose2d(256, 128, 4, 2, 1, bias=False),
+            nn.BatchNorm2d(128),
+            nn.ReLU(True),
+
+            nn.ConvTranspose2d(128, 64, 4, 2, 1, bias=False),
+            nn.BatchNorm2d(64),
+            nn.ReLU(True),
+
+            nn.ConvTranspose2d(64, 3, 4, 2, 1),
             nn.Tanh()
         )
 
@@ -98,57 +103,36 @@ class Generator(nn.Module):
         r"""Defines the computation performed at every call.
 
         Args:
-          input (tensor): input tensor into the calculation.
+            input (tensor): input tensor into the calculation.
 
         Returns:
-          A four-dimensional vector (NCHW).
+            A four-dimensional vector (NCHW).
         """
         out = self.main(input)
-        out = out.reshape(out.size(0), self.channels, self.image_size, self.image_size)
         return out
 
 
-def _gan(arch, image_size, channels, pretrained, progress):
-    model = Generator(image_size, channels)
+def _gan(arch, pretrained, progress):
+    model = Generator()
     if pretrained:
         state_dict = load_state_dict_from_url(model_urls[arch], progress=progress)
         model.load_state_dict(state_dict)
     return model
 
 
-def discriminator(**kwargs) -> Discriminator:
+def discriminator() -> Discriminator:
     r"""GAN model architecture from the
-    `"One weird trick..." <https://arxiv.org/abs/1704.00028v3>`_ paper.
+    `"One weird trick..." <https://arxiv.org/abs/1704.00028>`_ paper.
     """
-    model = Discriminator(**kwargs)
+    model = Discriminator()
     return model
 
 
-def mnist(pretrained: bool = False, progress: bool = True) -> Generator:
+def lsun(pretrained: bool = False, progress: bool = True) -> Generator:
     r"""GAN model architecture from the
-    `"One weird trick..." <https://arxiv.org/abs/1704.00028v3>`_ paper.
+    `"One weird trick..." <https://arxiv.org/abs/1704.00028>`_ paper.
     Args:
         pretrained (bool): If True, returns a model pre-trained on ImageNet
         progress (bool): If True, displays a progress bar of the download to stderr
     """
-    return _gan("mnist", 28, 1, pretrained, progress)
-
-
-def fashion_mnist(pretrained: bool = False, progress: bool = True) -> Generator:
-    r"""GAN model architecture from the
-    `"One weird trick..." <https://arxiv.org/abs/1704.00028v3>`_ paper.
-    Args:
-        pretrained (bool): If True, returns a model pre-trained on ImageNet
-        progress (bool): If True, displays a progress bar of the download to stderr
-    """
-    return _gan("fashion-mnist", 28, 1, pretrained, progress)
-
-
-def cifar10(pretrained: bool = False, progress: bool = True) -> Generator:
-    r"""GAN model architecture from the
-    `"One weird trick..." <https://arxiv.org/abs/1704.00028v3>`_ paper.
-    Args:
-        pretrained (bool): If True, returns a model pre-trained on ImageNet
-        progress (bool): If True, displays a progress bar of the download to stderr
-    """
-    return _gan("cifar10", 32, 3, pretrained, progress)
+    return _gan("lsun", pretrained, progress)

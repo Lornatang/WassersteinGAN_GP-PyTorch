@@ -16,7 +16,6 @@ import logging
 
 import torch
 import torchvision.utils as vutils
-
 import wgangp_pytorch.models as models
 from wgangp_pytorch.utils import create_folder
 from wgangp_pytorch.utils import select_device
@@ -29,13 +28,13 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(format="[ %(levelname)s ] %(message)s", level=logging.INFO)
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Research and application of GAN based super resolution "
-                                                 "technology for pathological microscopic images.")
-    parser.add_argument("-a", "--arch", metavar="ARCH", default="mnist",
+    parser = argparse.ArgumentParser(
+        description="An implementation of WassersteinGAN-GP algorithm using PyTorch framework.")
+    parser.add_argument("-a", "--arch", metavar="ARCH", default="lsun",
                         choices=model_names,
                         help="model architecture: " +
                              " | ".join(model_names) +
-                             " (default: mnist)")
+                             " (default: lsun)")
     parser.add_argument("-n", "--num-images", type=int, default=64,
                         help="How many samples are generated at one time. (default: 64).")
     parser.add_argument("--outf", default="test", type=str, metavar="PATH",
@@ -57,14 +56,14 @@ if __name__ == "__main__":
 
     logger.info("Creating Testing Engine")
     device = select_device(args.device)
-    model = torch.hub.load("Lornatang/WassersteinGAN_GP-PyTorch", args.arch, pretrained=True)
+    model = torch.hub.load("Lornatang/WassersteinGAN-PyTorch", args.arch, progress=True, pretrained=True, verbose=False)
     model = model.to(device)
 
-    noise = torch.randn(args.num_images, 100, device=device)
+    noise = torch.randn(args.num_images, 100, 1, 1, device=device)
     with torch.no_grad():
         generated_images = model(noise)
 
-    vutils.save_image(generated_images, f"{args.outf}/test.bmp")
+    vutils.save_image(generated_images, f"{args.outf}/test.png", normalize=True)
     print("##################################################\n")
 
     logger.info("Test completed successfully.\n")
