@@ -149,15 +149,17 @@ class Trainer(object):
                 fake_images = self.generator(noise)
 
                 # Train with fake
-                fake_output = self.discriminator(fake_images.detach())
-                errD_fake = -torch.mean(fake_output)
+                fake_output = self.discriminator(fake_images)
+                errD_fake = torch.mean(fake_output)
                 D_G_z1 = fake_output.mean().item()
 
                 # Calculate W-div gradient penalty
-                gradient_penalty = calculate_gradient_penalty(self.discriminator, real_images, fake_images, self.device)
+                gradient_penalty = calculate_gradient_penalty(self.discriminator,
+                                                              real_images.data, fake_images.data,
+                                                              self.device)
 
                 # Add the gradients from the all-real and all-fake batches
-                errD = errD_real + errD_fake + gradient_penalty * 10
+                errD = errD_real - errD_fake + gradient_penalty * 10
                 errD.backward()
                 # Update D
                 self.optimizer_d.step()
@@ -169,6 +171,7 @@ class Trainer(object):
                     ##############################################
                     # Set generator gradients to zero
                     self.generator.zero_grad()
+
                     # Generate fake image batch with G
                     fake_images = self.generator(noise)
                     fake_output = self.discriminator(fake_images)
