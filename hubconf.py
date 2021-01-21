@@ -31,7 +31,7 @@ from torch.hub import load_state_dict_from_url
 from wgangp_pytorch.models import Generator
 
 model_urls = {
-    "lsun": "https://github.com/Lornatang/WassersteinGAN_GP-PyTorch/releases/download/0.1.0/WassersteinGAN_GP_lsun-be1a4073.pth"
+    "lsun": "https://github.com/Lornatang/WassersteinGAN_GP-PyTorch/releases/download/0.1.0/Wasserstein_GP_lsun-8404588a.pth"
 }
 
 dependencies = ["torch"]
