@@ -39,26 +39,24 @@ def create_folder(folder):
 def calculate_gradient_penalty(model, real_images, fake_images, device):
     """Calculates the gradient penalty loss for WGAN GP"""
     # Random weight term for interpolation between real and fake data
-    alpha = torch.rand(real_images.size(0), 1, 1, 1, device=device)
-
+    alpha = torch.randn((real_images.size(0), 1, 1, 1), device=device)
     # Get random interpolation between real and fake data
     interpolates = (alpha * real_images + ((1 - alpha) * fake_images)).requires_grad_(True)
-    interpolates = interpolates.to(device)
 
     model_interpolates = model(interpolates)
-
-    fake = torch.ones(model_interpolates.size(), device=device, requires_grad=False)
+    grad_outputs = torch.ones(model_interpolates.size(), device=device, requires_grad=False)
 
     # Get gradient w.r.t. interpolates
     gradients = torch.autograd.grad(
         outputs=model_interpolates,
         inputs=interpolates,
-        grad_outputs=fake,
+        grad_outputs=grad_outputs,
         create_graph=True,
         retain_graph=True,
         only_inputs=True,
     )[0]
-    gradient_penalty = ((gradients.norm(2, dim=1) - 1) ** 2).mean()
+    gradients = gradients.view(gradients.size(0), -1)
+    gradient_penalty = torch.mean((gradients.norm(2, dim=1) - 1) ** 2)
     return gradient_penalty
 
 

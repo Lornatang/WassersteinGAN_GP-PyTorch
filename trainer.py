@@ -52,7 +52,7 @@ class Trainer(object):
                                                            transforms.Resize((args.image_size, args.image_size)),
                                                            transforms.CenterCrop(args.image_size),
                                                            transforms.ToTensor(),
-                                                           transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+                                                           transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
                                                        ]))
         elif args.dataset == "lsun":
             classes = [c + "_train" for c in args.classes.split(",")]
@@ -61,7 +61,7 @@ class Trainer(object):
                                                     transforms.Resize((args.image_size, args.image_size)),
                                                     transforms.CenterCrop(args.image_size),
                                                     transforms.ToTensor(),
-                                                    transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+                                                    transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
                                                 ]))
         else:
             classes = [c + "_train" for c in args.classes.split(",")]
@@ -70,7 +70,7 @@ class Trainer(object):
                                                     transforms.Resize((args.image_size, args.image_size)),
                                                     transforms.CenterCrop(args.image_size),
                                                     transforms.ToTensor(),
-                                                    transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+                                                    transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
                                                 ]))
         self.dataloader = torch.utils.data.DataLoader(dataset,
                                                       batch_size=args.batch_size,
@@ -149,7 +149,7 @@ class Trainer(object):
                 fake_images = self.generator(noise)
 
                 # Train with fake
-                fake_output = self.discriminator(fake_images)
+                fake_output = self.discriminator(fake_images.detach())
                 errD_fake = torch.mean(fake_output)
                 D_G_z1 = fake_output.mean().item()
 
@@ -159,7 +159,7 @@ class Trainer(object):
                                                               self.device)
 
                 # Add the gradients from the all-real and all-fake batches
-                errD = errD_real - errD_fake + gradient_penalty * 10
+                errD = -errD_real + errD_fake + gradient_penalty * 10
                 errD.backward()
                 # Update D
                 self.optimizer_d.step()
@@ -175,7 +175,7 @@ class Trainer(object):
                     # Generate fake image batch with G
                     fake_images = self.generator(noise)
                     fake_output = self.discriminator(fake_images)
-                    errG = torch.mean(fake_output)
+                    errG = -torch.mean(fake_output)
                     D_G_z2 = fake_output.mean().item()
                     errG.backward()
                     self.optimizer_g.step()
