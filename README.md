@@ -60,7 +60,7 @@ $ python3 download_weights.py
 
 #### Download cartoon faces
 
-[baiduclouddisk](https://pan.baidu.com/s/1nawrN1Kiw3Z2Jk1NgJqZTQ)  access: `68rn`
+[baiduclouddisk](https://pan.baidu.com/s/1OvUNRavkqsk4zv3UVUbR-Q)  access: `eoek`
 
 ### Test
 
